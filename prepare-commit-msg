@@ -7,15 +7,16 @@ COMMIT_MSG_CONTENT=$ORIGINAL_COMMIT_MSG
 # Get the current branch name
 BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null) || exit 0
 
-# Scan path segments for JIRA-style ticket (e.g. HLX-4584/dip-hierarchy-mapping).
+# Scan path segments for JIRA-style tickets, including lowercase branch names
+# such as codex/hlx-2856-feature. Commit messages always use uppercase keys.
 # Basename-only matching misses tickets in parent segments; skip segments without PROJECT-123.
 TICKET_NUMBER=""
 RELEASE_NUMBER=""
 for seg in ${(s:/:)BRANCH_NAME}; do
-  candidate_ticket=$(print -r -- "$seg" | sed -n -E 's/^([A-Z][A-Z0-9]+-[0-9]+).*/\1/p')
+  candidate_ticket=$(print -r -- "$seg" | sed -n -E 's/^([A-Za-z][A-Za-z0-9]+-[0-9]+).*/\1/p')
   if [[ -n "$candidate_ticket" ]]; then
-    TICKET_NUMBER=$candidate_ticket
-    candidate_release=$(print -r -- "$seg" | sed -n -E 's/^[A-Z][A-Z0-9]+-[0-9]+-([0-9]+\.[0-9]+).*/\1/p')
+    TICKET_NUMBER=${(U)candidate_ticket}
+    candidate_release=$(print -r -- "$seg" | sed -n -E 's/^[A-Za-z][A-Za-z0-9]+-[0-9]+-([0-9]+\.[0-9]+).*/\1/p')
     [[ -n "$candidate_release" ]] && RELEASE_NUMBER=$candidate_release
     break
   fi
